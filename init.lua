@@ -1,3 +1,4 @@
+-- mod-version:2 -- lite-xl 2.0
 -- A plugin to load fallback
 -- modified from drawwhitespaces.lua
 
@@ -11,19 +12,26 @@ local Object = require "core.object"
 local utf8_explode = require "plugins.fallbackfonts.utfhelper"
 local path = system.absolute_path -- shorthand to normalise path
 
-local PLUGINDIR = path(EXEDIR .. "/data/plugins/fallbackfonts")
+local PLUGINDIR = path(DATADIR.. "/plugins/fallbackfonts")
 local MAX_CODEPOINT = 0xFFFF
 
 ---------------------------------------------------------------
 ---- Configuraation
 ---------------------------------------------------------------
-config.fallback_fonts = {}
-config.fallback_fonts.enable = false
-config.fallback_fonts.preload_range = { lower = 0, upper = 0xFF }
-config.fallback_fonts.fontmap_file = path(PLUGINDIR .. "/fontmap.bin")
-config.fallback_fonts.fonts = {
-  { path = path(EXEDIR .. "/data/fonts/monospace.ttf"), size = 13.5 },
+local fallback_fonts = {}
+fallback_fonts.enable = false
+fallback_fonts.preload_range = { lower = 0, upper = 0xFF }
+fallback_fonts.fontmap_file = path(PLUGINDIR .. "/fontmap.bin")
+fallback_fonts.fonts = {
+  { path = path(DATADIR .. "/fonts/JetBrainsMono-Regular.ttf"), size = 14.0 },
 }
+if config["fallback_fonts"] ~= nil then
+  for k, v in pairs(config.fallback_fonts) do
+    fallback_fonts[k] = v
+  end
+
+end
+config.fallback_fonts = fallback_fonts
 
 ---------------------------------------------------------------
 ---- Utilities and classes
@@ -188,10 +196,11 @@ local function initialize()
   fonts = {}
 
   if not file_exists(config.fallback_fonts.fontmap_file) then
-    local generate = system.show_confirm_dialog(
-      "Fallback fonts",
-      "Fontmap not found. Generate a new one?"
-    )
+    -- local generate = system.show_confirm_dialog(
+    --   "Fallback fonts",
+    --   "Fontmap not found. Generate a new one?"
+    -- )
+    local generate = true
     if generate then
       generate_fontmap()
     else
@@ -204,15 +213,12 @@ local function initialize()
   end
 end
 
-local init = core.init
-function core.init()
-  init()
-  initialize()
-end
+initialize()
 
 local function delete_fontmap()
   local result, err
-  if system.show_confirm_dialog("Fallback fonts", "Do you want to delete the fontmap?") then
+  -- if system.show_confirm_dialog("Fallback fonts", "Do you want to delete the fontmap?") then
+  if true then
     if io.type(fontmap.f) == "file" then fontmap.f:close() end
     result, err = os.remove(config.fallback_fonts.fontmap_file)
     if result then
@@ -304,6 +310,23 @@ function DocView:draw_line_text(idx, x, y)
   end
 end
 
+local function test_fontmap()
+  local text="中文"
+  local cps = utf8_explode(text)
+  for i, cp in ipairs(cps.codepoints) do
+      local msg = string.format("CN Fontmap.%s,%s,%s", i, cp, fontmap:cp(cp))
+      -- core.log("Fontmap.", i, cp, fontmap:cp(cp))
+      core.log(msg)
+  end
+
+  local text="ab"
+  local cps = utf8_explode(text)
+  for i, cp in ipairs(cps.codepoints) do
+      local msg = string.format("EN Fontmap.%s,%s,%s", i, cp, fontmap:cp(cp))
+      -- core.log("Fontmap.", i, cp, fontmap:cp(cp))
+      core.log(msg)
+  end
+end
 
 command.add("core.docview", {
   ["fallback-fonts:toggle"]         = function() config.fallback_fonts.enable = not config.fallback_fonts.enable end,
@@ -313,6 +336,7 @@ command.add("core.docview", {
 command.add(nil, {
   ["fallback-fonts:delete-fontmap"]     = delete_fontmap,
   ["fallback-fonts:regenerate-fontmap"] = regenerate_fontmap,
+  ["fallback-fonts:test-fontmap"] = test_fontmap,
 })
 
 return initialize

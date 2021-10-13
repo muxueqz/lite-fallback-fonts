@@ -18,11 +18,10 @@ From [GitHub Actions](https://github.com/takase1121/lite-fallback-fonts/actions)
 ### Configuration
 This plugin introduces a table `config.fallback_fonts` that can be set in `data/user/init.lua`.
 ```lua
-config.fallback_fonts.enable = false
-config.fallback_fonts.preload_range = { lower = 0, upper = 0xFF }
-config.fallback_fonts.fontmap_file = path(PLUGINDIR .. "/fontmap.bin")
+local fallback_fonts = require "plugins.fallbackfonts"
 config.fallback_fonts.fonts = {
-  { path = path(EXEDIR .. "/data/fonts/monospace.ttf"), size = 13.5 },
+  { path = "/usr/share/fonts/wps-office/FZSSK.TTF", size = 18.5 },
+  { path = DATADIR .. "/fonts/JetBrainsMono-Regular.ttf", size = 14.5 },
 }
 ```
 
